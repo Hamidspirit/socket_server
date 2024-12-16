@@ -27,7 +27,7 @@ client_color = random.choice(colors)
 # put the private (network) Ip address (e.g 192.168.1.2)
 
 SERVER_HOST = "127.0.0.1"
-SERVER_PORT = 5080 # servers port
+SERVER_PORT = 12345 # servers port
 separator_token = "<SEP>" # use this to seperate client name and message
 
 # initialize TCP socket
