@@ -28,47 +28,59 @@ client_color = random.choice(colors)
 
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 12345 # servers port
-separator_token = "<SEP>" # use this to seperate client name and message
+separator_token = ": " # use this to seperate client name and message
 
 # initialize TCP socket
-s = socket.socket()
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print(f"[*]Connecting to {SERVER_HOST}: {SERVER_PORT}")
 
-# connect to server
-s.connect((SERVER_HOST, SERVER_PORT))
-print(f"[+]Connected.")
 
 # prompt client for a name
 name = input("Enter Your name: ")
 
-def listen_for_messages():
+def listen_for_messages(client_socket):
     """Listens for messages comming from server"""
     while True:
-        message = s.recv(1024).decode()
-        print("\n" + message)
+        try:
+            message = client_socket.recv(1024).decode()
+            if not message:
+                break
+            print("\n" + message)
+        except:
+            print("Disconnected")
+            break
 
-# make a thread that listens for messages to this client and prints them
-t = Thread(target=listen_for_messages)  
-# make the thread daemo so it ends whenever the main thread ends
-t.daemon = True
+def start_client(SERVER_HOST, SERVER_PORT):
+    """start the chat client"""
+    client_socket = s
 
-# start the thread
-t.start()
+    # connect to server
+    client_socket.connect((SERVER_HOST, SERVER_PORT))
+    print(f"[+]Connected.")
 
-while True:
-    # input the message we eant to send to server
-    to_send = input()
+    # make a thread that listens for messages to this client and prints them
+    t = Thread(target=listen_for_messages, args=(client_socket,))  
+    # make the thread daemo so it ends whenever the main thread ends
+    t.daemon = True
+    # start the thread
+    t.start()
 
-    # a way to exit the program
-    if to_send.lower() == "q":
-        break
+    while True:
+        # input the message we eant to send to server
+        to_send = input()
 
-    # add date time and color of the sender
-    date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    to_send = f"{client_color}[{date_now}] {name}{separator_token}{to_send}{Fore.RESET}"
+        # a way to exit the program
+        if to_send.lower() == "q":
+            break
 
-    # send the message
-    s.send(to_send.encode())
+        try:
+            # add date time and color of the sender
+            date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            to_send = f"{client_color}[{date_now}] {name}{separator_token}{to_send}{Fore.RESET} \n"
+            # send the message
+            s.send(to_send.encode('utf-8'))
+        except:
+            print("connection closed")
 
-# close the socket
-s.close()
+if __name__ == "__main__":
+    start_client(SERVER_HOST, SERVER_PORT)
